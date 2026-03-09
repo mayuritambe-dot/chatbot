@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI PDF Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .chat-container { height: calc(100vh - 160px); }
+        .user-msg { background: #3b82f6; color: white; border-radius: 15px 15px 0 15px; }
+        .ai-msg { background: #f3f4f6; color: #1f2937; border-radius: 15px 15px 15px 0; }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans">
+    <div class="max-w-4xl mx-auto p-4">
+        <header class="text-center py-6">
+            <h1 class="text-3xl font-bold text-slate-800">Local PDF Intelligence</h1>
+            <p class="text-slate-500">Powered by Ollama & Llama 3.2</p>
+        </header>
+
+        <div id="chat-window" class="chat-container overflow-y-auto bg-white rounded-xl shadow-sm p-6 space-y-4">
+            <div class="ai-msg p-4 max-w-[80%] shadow-sm">
+                Hello! I've indexed your PDF. What would you like to know?
+            </div>
+        </div>
+
+        <div class="mt-4 flex gap-2">
+            <input type="text" id="userInput" placeholder="Ask about your document..." 
+                   class="flex-1 p-4 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm">
+            <button onclick="sendMessage()" class="bg-blue-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-blue-700 transition">
+                Send
+            </button>
+        </div>
+    </div>
+
+    <script>
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const chatWindow = document.getElementById('chat-window');
+            if (!input.value) return;
+
+            // User message
+            chatWindow.innerHTML += `<div class="flex justify-end"><div class="user-msg p-4 max-w-[80%] shadow-sm">${input.value}</div></div>`;
+            const userText = input.value;
+            input.value = '';
+
+            // Loading state
+            const loadingId = Date.now();
+            chatWindow.innerHTML += `<div id="${loadingId}" class="ai-msg p-4 max-w-[80%] italic text-slate-400">Thinking...</div>`;
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+
+            const response = await fetch('/ask', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({query: userText})
+            });
+            const data = await response.json();
+
+            document.getElementById(loadingId).remove();
+            chatWindow.innerHTML += `<div class="ai-msg p-4 max-w-[80%] shadow-sm">${data.answer}</div>`;
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+    </script>
+</body>
+</html>
